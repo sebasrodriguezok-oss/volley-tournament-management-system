@@ -1,0 +1,21 @@
+info:
+  name: Actualizar un torneo
+  type: http
+  seq: 1
+
+http:
+  method: PUT
+  url: http://localhost:3000/api/torneos/6a2b35521727e97bad717702
+  body:
+    type: json
+    data: |-
+      {
+        "nombre": "Torneo Apertura 2025 - Modificado"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

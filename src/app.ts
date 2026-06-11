@@ -1,24 +1,31 @@
-import express from "express";
-import { connectDB } from "./config/db";
+import express from 'express';
+import { MongoClient } from 'mongodb';
+import { TorneoRepositoryMongodb } from './modules/torneos/torneo.repository.mongodb';
+import { TorneoService } from './modules/torneos/torneo.service';
+import { TorneoController } from './modules/torneos/torneo.controller';
+import { TorneoRoutes } from './modules/torneos/torneo.routes';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
 
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.json({ mensaje: "API Voley Torneos funcionando" });
-});
+async function main() {
+  const mongoClient = new MongoClient(MONGO_URI);
+  await mongoClient.connect();
+  console.log('Conectado a MongoDB');
 
-connectDB()
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`Servidor corriendo en http://localhost:${PORT}`);
-    });
-  })
-  .catch((error) => {
-    console.error("Error al conectar la base de datos:", error);
-    process.exit(1);
+  const torneoRepository = new TorneoRepositoryMongodb(mongoClient);
+  const torneoService = new TorneoService(torneoRepository);
+  const torneoController = new TorneoController(torneoService);
+  const torneoRoutes = new TorneoRoutes(torneoController);
+
+  app.use('/api', torneoRoutes.router);
+
+  app.listen(PORT, () => {
+    console.log(`Servidor corriendo en http://localhost:${PORT}`);
   });
+}
 
-export default app;
+main().catch(console.error);
