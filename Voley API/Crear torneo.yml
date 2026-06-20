@@ -1,20 +1,21 @@
 info:
   name: Crear torneo
   type: http
+  seq: 1
 
 http:
   method: POST
-  url: http://localhost:3000/api/torneos
+  url: http://localhost:3000/api/tournaments
   body:
     type: json
     data: |-
       {
-        "nombre": "Torneo Apertura 2025",
-        "tipo": "todos_contra_todos",
-        "fechaInicio": "2025-08-01",
-        "fechaFin": "2025-09-30",
-        "cantidadEquipos": 8,
-        "estado": "pendiente"
+        "name": "Torneo Apertura 2025",
+        "type": "round_robin",
+        "startDate": "2025-08-01",
+        "endDate": "2025-09-30",
+        "teamCount": 8,
+        "status": "pending"
       }
   auth: inherit
 

@@ -5,12 +5,16 @@ info:
 
 http:
   method: PUT
-  url: http://localhost:3000/api/torneos/6a2b35521727e97bad717702
+  url: PUT http://localhost:3000/api/tournaments/:id
+  params:
+    - name: id
+      value: ""
+      type: path
   body:
     type: json
     data: |-
       {
-        "nombre": "Torneo Apertura 2025 - Modificado"
+        "name": "Torneo Apertura 2025 - Modificado"
       }
   auth: inherit
 

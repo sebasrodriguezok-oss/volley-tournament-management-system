@@ -1,9 +1,9 @@
 import express from 'express';
 import { MongoClient } from 'mongodb';
-import { TorneoRepositoryMongodb } from './modules/torneos/torneo.repository.mongodb';
-import { TorneoService } from './modules/torneos/torneo.service';
-import { TorneoController } from './modules/torneos/torneo.controller';
-import { TorneoRoutes } from './modules/torneos/torneo.routes';
+import { TournamentRepositoryMongodb } from './modules/tournaments/tournament.repository.mongodb';
+import { TournamentService } from './modules/tournaments/tournament.service';
+import { TournamentController } from './modules/tournaments/tournament.controller';
+import { TournamentRoutes } from './modules/tournaments/tournament.routes';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,12 +16,12 @@ async function main() {
   await mongoClient.connect();
   console.log('Conectado a MongoDB');
 
-  const torneoRepository = new TorneoRepositoryMongodb(mongoClient);
-  const torneoService = new TorneoService(torneoRepository);
-  const torneoController = new TorneoController(torneoService);
-  const torneoRoutes = new TorneoRoutes(torneoController);
+  const tournamentRepository = new TournamentRepositoryMongodb(mongoClient);
+  const tournamentService = new TournamentService(tournamentRepository);
+  const tournamentController = new TournamentController(tournamentService);
+  const tournamentRoutes = new TournamentRoutes(tournamentController);
 
-  app.use('/api', torneoRoutes.router);
+  app.use('/api', tournamentRoutes.router);
 
   app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
