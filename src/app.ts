@@ -1,41 +1,68 @@
 import express from 'express';
 import { MongoClient } from 'mongodb';
+
 import { TorneoRepositoryMongodb } from './modules/torneos/torneo.repository.mongodb';
 import { TorneoService } from './modules/torneos/torneo.service';
 import { TorneoController } from './modules/torneos/torneo.controller';
 import { TorneoRoutes } from './modules/torneos/torneo.routes';
+
 import { EquipoRepositoryMongodb } from './modules/equipos/equipo.repository.mongodb';
 import { EquipoService } from './modules/equipos/equipo.service';
 import { EquipoController } from './modules/equipos/equipo.controller';
 import { EquipoRoutes } from './modules/equipos/equipo.routes';
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
+export class App {
 
-app.use(express.json());
+  public readonly app;
+  private mongoClient?: MongoClient;
 
-async function main() {
-  const mongoClient = new MongoClient(MONGO_URI);
-  await mongoClient.connect();
-  console.log('Conectado a MongoDB');
+  private readonly PORT = process.env.PORT || 3000;
+  private readonly MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
 
-  const torneoRepository = new TorneoRepositoryMongodb(mongoClient);
-  const torneoService = new TorneoService(torneoRepository);
-  const torneoController = new TorneoController(torneoService);
-  const torneoRoutes = new TorneoRoutes(torneoController);
+  constructor() {
+    this.app = express();
 
-  const equipoRepository = new EquipoRepositoryMongodb(mongoClient);
-  const equipoService = new EquipoService(equipoRepository, torneoRepository);
-  const equipoController = new EquipoController(equipoService);
-  const equipoRoutes = new EquipoRoutes(equipoController);
+    this.app.use(express.json());
+    this.app.use(express.urlencoded({ extended: true }));
+  }
 
-  app.use('/api', equipoRoutes.router);
-  app.use('/api', torneoRoutes.router);
+  public async start() {
+    this.mongoClient = new MongoClient(this.MONGO_URI);
+    await this.mongoClient.connect();
 
-  app.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
-  });
+    console.log('Conectado a MongoDB');
+
+    const torneoRepository = new TorneoRepositoryMongodb(this.mongoClient);
+    const torneoService = new TorneoService(torneoRepository);
+    const torneoController = new TorneoController(torneoService);
+    const torneoRoutes = new TorneoRoutes(torneoController);
+
+    const equipoRepository = new EquipoRepositoryMongodb(this.mongoClient);
+    const equipoService = new EquipoService(equipoRepository, torneoRepository);
+    const equipoController = new EquipoController(equipoService);
+    const equipoRoutes = new EquipoRoutes(equipoController);
+
+    this.app.use('/api', torneoRoutes.router);
+    this.app.use('/api', equipoRoutes.router);
+
+    this.app.listen(this.PORT, () => {
+      console.log(`Servidor corriendo en http://localhost:${this.PORT}`);
+    });
+
+    console.log('App started');
+  }
+
+  public shutdown() {
+    console.log('Shutting down app...');
+
+    this.close().then(() => {
+      process.exit(0);
+    });
+  }
+
+  public async close() {
+    if (this.mongoClient) {
+      await this.mongoClient.close();
+    }
+  }
 }
-
-main().catch(console.error);
