@@ -11,6 +11,11 @@ import { EquipoService } from './modules/equipos/equipo.service';
 import { EquipoController } from './modules/equipos/equipo.controller';
 import { EquipoRoutes } from './modules/equipos/equipo.routes';
 
+import { InscripcionRepositoryMongodb } from './modules/inscripciones/inscripcion.repository.mongodb';
+import { InscripcionService } from './modules/inscripciones/inscripcion.service';
+import { InscripcionController } from './modules/inscripciones/inscripcion.controller';
+import { InscripcionRoutes } from './modules/inscripciones/inscripcion.routes';
+
 export class App {
 
   public readonly app;
@@ -42,8 +47,14 @@ export class App {
     const equipoController = new EquipoController(equipoService);
     const equipoRoutes = new EquipoRoutes(equipoController);
 
+    const inscripcionRepository = new InscripcionRepositoryMongodb(this.mongoClient);
+    const inscripcionService = new InscripcionService(inscripcionRepository, equipoRepository, torneoRepository);
+    const inscripcionController = new InscripcionController(inscripcionService);
+    const inscripcionRoutes = new InscripcionRoutes(inscripcionController);
+    
     this.app.use('/api', torneoRoutes.router);
     this.app.use('/api', equipoRoutes.router);
+    this.app.use('/api', inscripcionRoutes.router);
 
     this.app.listen(this.PORT, () => {
       console.log(`Servidor corriendo en http://localhost:${this.PORT}`);
