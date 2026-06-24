@@ -19,7 +19,6 @@ export class EquipoRepositoryMongodb implements EquipoRepository {
     return equipos.map(equipo => ({
       id: equipo._id.toString(),
       nombre: equipo.nombre,
-      torneoId: equipo.torneoId,
       categoria: equipo.categoria,
       entrenador: equipo.entrenador,
       cantidadJugadores: equipo.cantidadJugadores
@@ -36,19 +35,28 @@ export class EquipoRepositoryMongodb implements EquipoRepository {
     return {
       id: equipo._id.toString(),
       nombre: equipo.nombre,
-      torneoId: equipo.torneoId,
       categoria: equipo.categoria,
       entrenador: equipo.entrenador,
       cantidadJugadores: equipo.cantidadJugadores
     };
   }
 
-  async createEquipo(equipo: Omit<Equipo, 'id'>): Promise<Equipo> {
-    const result = await this.db().collection('equipos').insertOne(equipo);
+  async createEquipo(equipo: Omit<Equipo, 'id'>): Promise<Equipo> { // Omitimos el campo 'id' ya que MongoDB lo generará automáticamente
+    const equipoAInsertar = {
+      nombre: equipo.nombre,
+      categoria: equipo.categoria,
+      entrenador: equipo.entrenador,
+      cantidadJugadores: equipo.cantidadJugadores
+    };
 
-    return {
+    const result = await this.db().collection('equipos').insertOne(equipoAInsertar);
+
+    return {                                                        // Retornamos el equipo con el ID generado por MongoDB
       id: result.insertedId.toString(),
-      ...equipo
+      nombre: equipoAInsertar.nombre,
+      categoria: equipoAInsertar.categoria,
+      entrenador: equipoAInsertar.entrenador,
+      cantidadJugadores: equipoAInsertar.cantidadJugadores
     };
   }
 
@@ -64,7 +72,6 @@ export class EquipoRepositoryMongodb implements EquipoRepository {
     return {
       id: result._id.toString(),
       nombre: result.nombre,
-      torneoId: result.torneoId,
       categoria: result.categoria,
       entrenador: result.entrenador,
       cantidadJugadores: result.cantidadJugadores

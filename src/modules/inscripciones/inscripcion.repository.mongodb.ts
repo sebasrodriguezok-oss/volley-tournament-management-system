@@ -13,7 +13,7 @@ export class InscripcionRepositoryMongodb implements InscripcionRepository {
     return this.mongoClient.db('voley_torneos');
   }
 
-  private toInscripcion(inscripcion: any): Inscripcion {
+  private toInscripcion(inscripcion: any): Inscripcion { 
     return {
       id: inscripcion._id.toString(),
       equipoId: inscripcion.equipoId,
@@ -22,7 +22,7 @@ export class InscripcionRepositoryMongodb implements InscripcionRepository {
     };
   }
 
-  async getInscripciones(): Promise<Inscripcion[]> {
+  async getInscripciones(): Promise<Inscripcion[]> { 
     const inscripciones = await this.db().collection('inscripciones').find().toArray();
     return inscripciones.map(inscripcion => this.toInscripcion(inscripcion));
   }
@@ -54,11 +54,19 @@ export class InscripcionRepositoryMongodb implements InscripcionRepository {
   }
 
   async createInscripcion(inscripcion: Omit<Inscripcion, 'id'>): Promise<Inscripcion> {
-    const result = await this.db().collection('inscripciones').insertOne(inscripcion);
+    const inscripcionAInsertar = {
+      equipoId: inscripcion.equipoId,
+      torneoId: inscripcion.torneoId,
+      fechaInscripcion: inscripcion.fechaInscripcion
+    };
+
+    const result = await this.db().collection('inscripciones').insertOne(inscripcionAInsertar);
 
     return {
       id: result.insertedId.toString(),
-      ...inscripcion
+      equipoId: inscripcionAInsertar.equipoId,
+      torneoId: inscripcionAInsertar.torneoId,
+      fechaInscripcion: inscripcionAInsertar.fechaInscripcion
     };
   }
 

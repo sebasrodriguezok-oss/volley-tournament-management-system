@@ -43,7 +43,7 @@ export class App {
     const torneoRoutes = new TorneoRoutes(torneoController);
 
     const equipoRepository = new EquipoRepositoryMongodb(this.mongoClient);
-    const equipoService = new EquipoService(equipoRepository, torneoRepository);
+    const equipoService = new EquipoService(equipoRepository);
     const equipoController = new EquipoController(equipoService);
     const equipoRoutes = new EquipoRoutes(equipoController);
 

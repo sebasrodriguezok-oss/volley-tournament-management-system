@@ -1,7 +1,6 @@
 info:
   name: Traer por torneo
   type: http
-  seq: 1
 
 http:
   method: GET
@@ -13,4 +12,3 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
-​
