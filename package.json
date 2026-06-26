@@ -1,5 +1,5 @@
 {
-  "name": "voley-torneos",
+  "name": "volley-tournament-management-system",
   "version": "1.0.0",
   "description": "Sistema de gestión de torneos de voley amateur",
   "main": "dist/app.js",
