@@ -1,10 +1,15 @@
 info:
   name: Crear equipo
   type: http
+  seq: 1
 
 http:
   method: POST
-  url: http://localhost:3000/api/equipos
+  url: http://localhost:3000/api/teams?Los alcones galacticos=los alcones galacticos
+  params:
+    - name: Los alcones galacticos
+      value: los alcones galacticos
+      type: query
   auth: inherit
 
 settings:

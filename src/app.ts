@@ -1,20 +1,20 @@
 import express from 'express';
 import { MongoClient } from 'mongodb';
 
-import { TorneoRepositoryMongodb } from './modules/torneos/torneo.repository.mongodb';
-import { TorneoService } from './modules/torneos/torneo.service';
-import { TorneoController } from './modules/torneos/torneo.controller';
-import { TorneoRoutes } from './modules/torneos/torneo.routes';
+import { TournamentRepositoryMongodb } from './modules/tournaments/tournament.repository.mongodb';
+import { TournamentService } from './modules/tournaments/tournament.service';
+import { TournamentController } from './modules/tournaments/tournament.controller';
+import { TournamentRoutes } from './modules/tournaments/tournament.routes';
 
-import { EquipoRepositoryMongodb } from './modules/equipos/equipo.repository.mongodb';
-import { EquipoService } from './modules/equipos/equipo.service';
-import { EquipoController } from './modules/equipos/equipo.controller';
-import { EquipoRoutes } from './modules/equipos/equipo.routes';
+import { TeamRepositoryMongodb } from './modules/teams/team.repository.mongodb';
+import { TeamService } from './modules/teams/team.service';
+import { TeamController } from './modules/teams/team.controller';
+import { TeamRoutes } from './modules/teams/team.routes';
 
-import { InscripcionRepositoryMongodb } from './modules/inscripciones/inscripcion.repository.mongodb';
-import { InscripcionService } from './modules/inscripciones/inscripcion.service';
-import { InscripcionController } from './modules/inscripciones/inscripcion.controller';
-import { InscripcionRoutes } from './modules/inscripciones/inscripcion.routes';
+import { EnrollmentRepositoryMongodb } from './modules/enrollments/enrollment.repository.mongodb';
+import { EnrollmentService } from './modules/enrollments/enrollment.service';
+import { EnrollmentController } from './modules/enrollments/enrollment.controller';
+import { EnrollmentRoutes } from './modules/enrollments/enrollment.routes';
 
 export class App {
 
@@ -35,29 +35,29 @@ export class App {
     this.mongoClient = new MongoClient(this.MONGO_URI);
     await this.mongoClient.connect();
 
-    console.log('Conectado a MongoDB');
+    console.log('Connected to MongoDB');
 
-    const torneoRepository = new TorneoRepositoryMongodb(this.mongoClient);
-    const torneoService = new TorneoService(torneoRepository);
-    const torneoController = new TorneoController(torneoService);
-    const torneoRoutes = new TorneoRoutes(torneoController);
+    const tournamentRepository = new TournamentRepositoryMongodb(this.mongoClient);
+    const tournamentService = new TournamentService(tournamentRepository);
+    const tournamentController = new TournamentController(tournamentService);
+    const tournamentRoutes = new TournamentRoutes(tournamentController);
 
-    const equipoRepository = new EquipoRepositoryMongodb(this.mongoClient);
-    const equipoService = new EquipoService(equipoRepository);
-    const equipoController = new EquipoController(equipoService);
-    const equipoRoutes = new EquipoRoutes(equipoController);
+    const teamRepository = new TeamRepositoryMongodb(this.mongoClient);
+    const teamService = new TeamService(teamRepository);
+    const teamController = new TeamController(teamService);
+    const teamRoutes = new TeamRoutes(teamController);
 
-    const inscripcionRepository = new InscripcionRepositoryMongodb(this.mongoClient);
-    const inscripcionService = new InscripcionService(inscripcionRepository, equipoRepository, torneoRepository);
-    const inscripcionController = new InscripcionController(inscripcionService);
-    const inscripcionRoutes = new InscripcionRoutes(inscripcionController);
-    
-    this.app.use('/api', torneoRoutes.router);
-    this.app.use('/api', equipoRoutes.router);
-    this.app.use('/api', inscripcionRoutes.router);
+    const enrollmentRepository = new EnrollmentRepositoryMongodb(this.mongoClient);
+    const enrollmentService = new EnrollmentService(enrollmentRepository, teamRepository, tournamentRepository);
+    const enrollmentController = new EnrollmentController(enrollmentService);
+    const enrollmentRoutes = new EnrollmentRoutes(enrollmentController);
+
+    this.app.use('/api', tournamentRoutes.router);
+    this.app.use('/api', teamRoutes.router);
+    this.app.use('/api', enrollmentRoutes.router);
 
     this.app.listen(this.PORT, () => {
-      console.log(`Servidor corriendo en http://localhost:${this.PORT}`);
+      console.log(`Server running at http://localhost:${this.PORT}`);
     });
 
     console.log('App started');
