@@ -1,5 +1,7 @@
 import express from 'express';
 import { MongoClient } from 'mongodb';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger';
 
 import { TournamentRepositoryMongodb } from './modules/tournaments/tournament.repository.mongodb';
 import { TournamentService } from './modules/tournaments/tournament.service';
@@ -29,6 +31,9 @@ export class App {
 
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
+
+    // Swagger — disponible en http://localhost:3000/api-docs
+    this.app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
   }
 
   public async start() {
@@ -58,6 +63,7 @@ export class App {
 
     this.app.listen(this.PORT, () => {
       console.log(`Server running at http://localhost:${this.PORT}`);
+      console.log(`Swagger docs available at http://localhost:${this.PORT}/api-docs`);
     });
 
     console.log('App started');
