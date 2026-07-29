@@ -60,6 +60,23 @@ export class EnrollmentController {
     }
   }
 
+  // Baja lógica — cambia status a withdrawn
+  public async withdrawEnrollment(req: Request<{ id: string }>, res: Response): Promise<void> {
+    try {
+      const enrollment = await this.enrollmentService.withdrawEnrollment(req.params.id);
+
+      if (enrollment) {
+        res.json(enrollment);
+      } else {
+        res.status(404).json({ error: 'Enrollment not found' });
+      }
+    } catch (error: any) {
+      console.error('Error withdrawing enrollment:', error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  // Borrado físico — solo si realmente se necesita eliminar
   public async deleteEnrollment(req: Request<{ id: string }>, res: Response): Promise<void> {
     try {
       const deleted = await this.enrollmentService.deleteEnrollment(req.params.id);

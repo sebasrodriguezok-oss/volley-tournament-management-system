@@ -3,4 +3,5 @@ export interface Enrollment {
   teamId: string;
   tournamentId: string;
   enrollmentDate: Date;
+  status: 'active' | 'withdrawn' | 'cancelled';
 }

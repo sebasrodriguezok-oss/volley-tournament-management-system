@@ -18,7 +18,8 @@ export class EnrollmentRepositoryMongodb implements EnrollmentRepository {
       id: enrollment._id.toString(),
       teamId: enrollment.teamId,
       tournamentId: enrollment.tournamentId,
-      enrollmentDate: enrollment.enrollmentDate
+      enrollmentDate: enrollment.enrollmentDate,
+      status: enrollment.status
     };
   }
 
@@ -38,14 +39,17 @@ export class EnrollmentRepositoryMongodb implements EnrollmentRepository {
   }
 
   async getEnrollmentsByTournamentId(tournamentId: string): Promise<Enrollment[]> {
+    // Solo traemos inscripciones activas
     const enrollments = await this.db().collection('enrollments').find({
-      tournamentId
+      tournamentId,
+      status: 'active'
     }).toArray();
 
     return enrollments.map(enrollment => this.toEnrollment(enrollment));
   }
 
   async getEnrollmentsByTeamId(teamId: string): Promise<Enrollment[]> {
+    // Traemos todo el historial del equipo
     const enrollments = await this.db().collection('enrollments').find({
       teamId
     }).toArray();
@@ -57,17 +61,28 @@ export class EnrollmentRepositoryMongodb implements EnrollmentRepository {
     const enrollmentToInsert = {
       teamId: enrollment.teamId,
       tournamentId: enrollment.tournamentId,
-      enrollmentDate: enrollment.enrollmentDate
+      enrollmentDate: enrollment.enrollmentDate,
+      status: enrollment.status
     };
 
     const result = await this.db().collection('enrollments').insertOne(enrollmentToInsert);
 
     return {
       id: result.insertedId.toString(),
-      teamId: enrollmentToInsert.teamId,
-      tournamentId: enrollmentToInsert.tournamentId,
-      enrollmentDate: enrollmentToInsert.enrollmentDate
+      ...enrollmentToInsert
     };
+  }
+
+  async updateEnrollmentStatus(id: string, status: Enrollment['status']): Promise<Enrollment | null> {
+    const result = await this.db().collection('enrollments').findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      { $set: { status } },
+      { returnDocument: 'after' }
+    );
+
+    if (!result) return null;
+
+    return this.toEnrollment(result);
   }
 
   async deleteEnrollment(id: string): Promise<boolean> {
