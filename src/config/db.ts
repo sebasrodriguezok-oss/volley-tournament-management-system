@@ -1,18 +1,22 @@
 import { MongoClient, Db } from "mongodb";
-
-const URI = process.env.MONGO_URI || "mongodb://localhost:27017";
-const DB_NAME = "voley_torneos";
+import { config } from "./config";
 
 let db: Db;
 
 export async function connectDB(): Promise<void> {
-  const client = new MongoClient(URI);
+  const client = new MongoClient(config.database.uri);
+
   await client.connect();
-  db = client.db(DB_NAME);
+
+  db = client.db(config.database.name);
+
   console.log("Conectado a MongoDB");
 }
 
 export function getDB(): Db {
-  if (!db) throw new Error("La base de datos no está conectada");
+  if (!db) {
+    throw new Error("La base de datos no está conectada");
+  }
+
   return db;
 }
