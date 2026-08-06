@@ -2,6 +2,8 @@ import express from 'express';
 import { MongoClient } from 'mongodb';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
+import dotenv from 'dotenv';
+dotenv.config();
 
 import { TournamentRepositoryMongodb } from './modules/tournaments/tournament.repository.mongodb';
 import { TournamentService } from './modules/tournaments/tournament.service';
