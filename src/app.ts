@@ -20,6 +20,11 @@ import { EnrollmentService } from './modules/enrollments/enrollment.service';
 import { EnrollmentController } from './modules/enrollments/enrollment.controller';
 import { EnrollmentRoutes } from './modules/enrollments/enrollment.routes';
 
+import { MatchRepositoryMongodb } from './modules/matches/match.repository.mongodb';
+import { MatchService } from './modules/matches/match.service';
+import { MatchController } from './modules/matches/match.controller';
+import { MatchRoutes } from './modules/matches/match.routes';
+
 export class App {
 
   public readonly app;
@@ -59,9 +64,15 @@ export class App {
     const enrollmentController = new EnrollmentController(enrollmentService);
     const enrollmentRoutes = new EnrollmentRoutes(enrollmentController);
 
+    const matchRepository = new MatchRepositoryMongodb(this.mongoClient);
+    const matchService = new MatchService(matchRepository);
+    const matchController = new MatchController(matchService);
+    const matchRoutes = new MatchRoutes(matchController);
+
     this.app.use('/api', tournamentRoutes.router);
     this.app.use('/api', teamRoutes.router);
     this.app.use('/api', enrollmentRoutes.router);
+    this.app.use('/api', matchRoutes.router);
 
     this.app.listen(this.PORT, () => {
       console.log(`Server running at http://localhost:${this.PORT}`);
