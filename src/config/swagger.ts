@@ -52,23 +52,29 @@ const options = {
         Match: {
           type: 'object',
           properties: {
-            id: { type: 'string', example: '64f1a2b3c4d5e6f7a8b9c0d4'},
-            tournamentId: { type: 'string', example: '64f1a2b3c4d5e6f7a8b9c0d1'},
-            homeTeamId: { type: 'string', example: '64f1a2b3c4d5e6f7a8b9c0d2'},
-            awayTeamId: { type: 'string', example: '64f1a2b3c4d5e6f7a8b9c0d3'},
-            round: { type: 'integer', example: 1},
-            matchDate: { type: 'string', format: 'date-time', nullable: true, example: '2026-08-15T18:00:00Z'},
-            status: {
-              type: 'string',
-              enum: [
-                'scheduled',
-                'in_progress',
-                'finished'
-              ],
-              example: 'scheduled'
-            },
-            homeScore: { type: 'integer', nullable: true, example: 3},
-            awayScore: { type: 'integer', nullable: true, example: 1}
+            id: { type: 'string', example: '64f1a2b3c4d5e6f7a8b9c0d4' },
+            tournamentId: { type: 'string', example: '64f1a2b3c4d5e6f7a8b9c0d1' },
+            homeTeamId: { type: 'string', example: '64f1a2b3c4d5e6f7a8b9c0d2' },
+            awayTeamId: { type: 'string', example: '64f1a2b3c4d5e6f7a8b9c0d3' },
+            round: { type: 'integer', example: 1 },
+            matchDate: { type: 'string', format: 'date-time', nullable: true, example: '2026-08-15T18:00:00Z' },
+            status: { type: 'string', enum: ['scheduled', 'in_progress', 'finished'], example: 'scheduled' },
+            homeScore: { type: 'integer', nullable: true, example: 2 },
+            awayScore: { type: 'integer', nullable: true, example: 1 }
+          }
+        },
+        Standing: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', example: '64f1a2b3c4d5e6f7a8b9c0d5' },
+            tournamentId: { type: 'string', example: '64f1a2b3c4d5e6f7a8b9c0d1' },
+            teamId: { type: 'string', example: '64f1a2b3c4d5e6f7a8b9c0d2' },
+            matchesPlayed: { type: 'number', example: 5 },
+            wins: { type: 'number', example: 3 },
+            losses: { type: 'number', example: 2 },
+            setsWon: { type: 'number', example: 8 },
+            setsLost: { type: 'number', example: 5 },
+            points: { type: 'number', example: 7 }
           }
         },
         Error: {
