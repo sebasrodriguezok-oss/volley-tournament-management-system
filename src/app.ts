@@ -25,6 +25,11 @@ import { MatchService } from './modules/matches/match.service';
 import { MatchController } from './modules/matches/match.controller';
 import { MatchRoutes } from './modules/matches/match.routes';
 
+import { FixtureController } from './modules/fixture/fixture.controller';
+import { FixtureRoutes } from './modules/fixture/fixture.routes';
+import { FixtureService } from './modules/fixture/fixture.service';
+import { RoundRobinGenerator } from './modules/fixture/round-robin.generator';
+
 export class App {
 
   public readonly app;
@@ -69,10 +74,22 @@ export class App {
     const matchController = new MatchController(matchService);
     const matchRoutes = new MatchRoutes(matchController);
 
+        // Fixture module
+    const roundRobinGenerator = new RoundRobinGenerator();
+    const fixtureService = new FixtureService(
+      tournamentRepository,
+      enrollmentRepository,
+      matchRepository,
+      roundRobinGenerator
+    );
+    const fixtureController = new FixtureController(fixtureService);
+    const fixtureRoutes = new FixtureRoutes(fixtureController);
+
     this.app.use('/api', tournamentRoutes.router);
     this.app.use('/api', teamRoutes.router);
     this.app.use('/api', enrollmentRoutes.router);
     this.app.use('/api', matchRoutes.router);
+    this.app.use('/api', fixtureRoutes.router);
 
     this.app.listen(this.PORT, () => {
       console.log(`Server running at http://localhost:${this.PORT}`);
