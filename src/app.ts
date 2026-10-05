@@ -30,6 +30,11 @@ import { FixtureRoutes } from './modules/fixture/fixture.routes';
 import { FixtureService } from './modules/fixture/fixture.service';
 import { RoundRobinGenerator } from './modules/fixture/round-robin.generator';
 
+import { StandingRepositoryMongodb } from './modules/standings/standing.repository.mongodb';
+import { StandingService } from './modules/standings/standing.service';
+import { StandingController } from './modules/standings/standing.controller';
+import { StandingRoutes } from './modules/standings/standing.routes';
+
 export class App {
 
   public readonly app;
@@ -70,11 +75,19 @@ export class App {
     const enrollmentRoutes = new EnrollmentRoutes(enrollmentController);
 
     const matchRepository = new MatchRepositoryMongodb(this.mongoClient);
-    const matchService = new MatchService(matchRepository);
+    const standingRepository = new StandingRepositoryMongodb(this.mongoClient);
+    const standingService = new StandingService(
+      standingRepository,
+      matchRepository,
+      enrollmentRepository
+    );
+    const standingController = new StandingController(standingService);
+    const standingRoutes = new StandingRoutes(standingController);
+
+    const matchService = new MatchService(matchRepository, standingService);
     const matchController = new MatchController(matchService);
     const matchRoutes = new MatchRoutes(matchController);
 
-        // Fixture module
     const roundRobinGenerator = new RoundRobinGenerator();
     const fixtureService = new FixtureService(
       tournamentRepository,
@@ -90,6 +103,7 @@ export class App {
     this.app.use('/api', enrollmentRoutes.router);
     this.app.use('/api', matchRoutes.router);
     this.app.use('/api', fixtureRoutes.router);
+    this.app.use('/api', standingRoutes.router);
 
     this.app.listen(this.PORT, () => {
       console.log(`Server running at http://localhost:${this.PORT}`);

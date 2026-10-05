@@ -1,10 +1,12 @@
-import { Match } from './match.entity';
+import { Match, MatchStatus } from './match.entity';
 import { MatchRepository } from './match.repository.interface';
+import { StandingService } from '../standings/standing.service';
 
 export class MatchService {
 
   constructor(
-    private readonly matchRepository: MatchRepository
+    private readonly matchRepository: MatchRepository,
+    private readonly standingService: StandingService
   ) {}
 
   async getMatches(): Promise<Match[]> {
@@ -49,7 +51,14 @@ export class MatchService {
       throw new Error('Round must be greater than zero');
     }
 
-    return await this.matchRepository.createMatch(data);
+    this.validateFinishedMatch(data);
+
+    const createdMatch = await this.matchRepository.createMatch(data);
+    if (createdMatch.status === MatchStatus.Finished) {
+      await this.standingService.recalculateStandings(createdMatch.tournamentId);
+    }
+
+    return createdMatch;
   }
 
   async updateMatch(
@@ -61,7 +70,32 @@ export class MatchService {
       throw new Error('Match ID is required');
     }
 
-    return await this.matchRepository.updateMatch(id, match);
+    const existingMatch = await this.matchRepository.getMatchById(id);
+    if (!existingMatch) {
+      return null;
+    }
+
+    const updatedMatchData = { ...existingMatch, ...match };
+    this.validateFinishedMatch(updatedMatchData);
+
+    const updatedMatch = await this.matchRepository.updateMatch(id, match);
+    if (!updatedMatch) {
+      return null;
+    }
+
+    const tournamentsToRecalculate = new Set<string>();
+    if (existingMatch.status === MatchStatus.Finished) {
+      tournamentsToRecalculate.add(existingMatch.tournamentId);
+    }
+    if (updatedMatch.status === MatchStatus.Finished) {
+      tournamentsToRecalculate.add(updatedMatch.tournamentId);
+    }
+
+    for (const tournamentId of tournamentsToRecalculate) {
+      await this.standingService.recalculateStandings(tournamentId);
+    }
+
+    return updatedMatch;
   }
 
   async deleteMatch(id: string): Promise<boolean> {
@@ -70,7 +104,23 @@ export class MatchService {
       throw new Error('Match ID is required');
     }
 
-    return await this.matchRepository.deleteMatch(id);
+    const existingMatch = await this.matchRepository.getMatchById(id);
+    if (!existingMatch) {
+      return false;
+    }
+
+    const deleted = await this.matchRepository.deleteMatch(id);
+    if (deleted && existingMatch.status === MatchStatus.Finished) {
+      await this.standingService.recalculateStandings(existingMatch.tournamentId);
+    }
+
+    return deleted;
+  }
+
+  private validateFinishedMatch(match: Omit<Match, 'id'> | Match): void {
+    if (match.status === MatchStatus.Finished) {
+      this.standingService.validateMatchResult(match.homeScore, match.awayScore);
+    }
   }
 
 }

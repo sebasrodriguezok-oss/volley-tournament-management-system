@@ -20,7 +20,15 @@ export class StandingService {
     return await this.standingRepository.getStandingsByTournamentId(tournamentId);
   }
 
-  // Se llama automáticamente cada vez que se carga un resultado
+  validateMatchResult(homeScore: number | null, awayScore: number | null): void {
+    if (homeScore === null || awayScore === null) {
+      throw new Error('Finished match scores are required');
+    }
+
+    this.calculatePoints(homeScore, awayScore);
+  }
+
+  // Actualiza la tabla de forma incremental para un partido finalizado.
   async updateStandingsAfterMatch(tournamentId: string, matchId: string): Promise<void> {
 
     // Obtener el partido con el resultado cargado
@@ -138,12 +146,15 @@ export class StandingService {
       throw new Error('Tournament ID is required');
     }
 
-    // Borrar standings actuales
-    await this.standingRepository.deleteStandingsByTournamentId(tournamentId);
-
     // Traer todos los partidos finalizados del torneo
     const matches = await this.matchRepository.getMatchesByTournamentId(tournamentId);
     const finishedMatches = matches.filter(m => m.status === MatchStatus.Finished);
+
+    for (const match of finishedMatches) {
+      this.validateMatchResult(match.homeScore, match.awayScore);
+    }
+
+    await this.standingRepository.deleteStandingsByTournamentId(tournamentId);
 
     // Recalcular cada partido
     for (const match of finishedMatches) {
