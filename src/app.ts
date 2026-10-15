@@ -2,8 +2,7 @@ import express from 'express';
 import { MongoClient } from 'mongodb';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
-import dotenv from 'dotenv';
-dotenv.config();
+import { config } from './config/config';
 
 import { TournamentRepositoryMongodb } from './modules/tournaments/tournament.repository.mongodb';
 import { TournamentService } from './modules/tournaments/tournament.service';
@@ -35,8 +34,7 @@ export class App {
   public readonly app;
   private mongoClient?: MongoClient;
 
-  private readonly PORT = process.env.PORT || 3000;
-  private readonly MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
+  private readonly PORT = config.port;
 
   constructor() {
     this.app = express();
@@ -49,7 +47,7 @@ export class App {
   }
 
   public async start() {
-    this.mongoClient = new MongoClient(this.MONGO_URI);
+    this.mongoClient = new MongoClient(config.database.uri);
     await this.mongoClient.connect();
 
     console.log('Connected to MongoDB');
