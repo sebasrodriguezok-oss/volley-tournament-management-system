@@ -3,6 +3,7 @@ import { MongoClient } from 'mongodb';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
 import { config } from './config/config';
+import cors from 'cors';
 
 import { TournamentRepositoryMongodb } from './modules/tournaments/tournament.repository.mongodb';
 import { TournamentService } from './modules/tournaments/tournament.service';
@@ -43,6 +44,14 @@ export class App {
 
   constructor() {
     this.app = express();
+
+    this.app.use(
+      cors({
+        origin: ['http://localhost:4200', 'http://127.0.0.1:4200'],
+        methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
+      }),
+    );
 
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
