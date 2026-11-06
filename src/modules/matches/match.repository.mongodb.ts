@@ -61,6 +61,22 @@ export class MatchRepositoryMongodb implements MatchRepository {
     return matches.map(match => this.toMatch(match));
   }
 
+  async getMatchesByTeamId(teamId: string): Promise<Match[]> {
+    const matches = await this.db()
+      .collection('matches')
+      .find({
+        $or: [{ homeTeamId: teamId }, { awayTeamId: teamId }]
+      })
+      .toArray();
+
+    return matches.map(match => this.toMatch(match));
+  }
+
+  async deleteMatchesByTournamentId(tournamentId: string): Promise<number> {
+    const result = await this.db().collection('matches').deleteMany({ tournamentId });
+    return result.deletedCount;
+  }
+
   async createMatch(match: Omit<Match, 'id'>): Promise<Match> {
     const result = await this.db()
       .collection('matches')

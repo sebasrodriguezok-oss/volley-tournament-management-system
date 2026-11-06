@@ -90,4 +90,18 @@ export class TournamentController {
       res.status(400).json({ error: error.message });
     }
   }
+
+  public async finishTournament(req: Request<{ id: string }>, res: Response): Promise<void> {
+    try {
+      const tournament = await this.tournamentService.finishTournament(req.params.id);
+      if (tournament) {
+        res.json(tournament);
+      } else {
+        res.status(404).json({ error: 'Tournament not found' });
+      }
+    } catch (error: any) {
+      console.error('Error finalizing tournament:', error);
+      res.status(400).json({ error: error.message });
+    }
+  }
 }

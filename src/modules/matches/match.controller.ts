@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { MatchService } from './match.service';
+import { MatchStatus } from './match.entity';
 
 export class MatchController {
 
@@ -73,6 +74,28 @@ export class MatchController {
       }
     } catch (error: any) {
       console.error('Error updating match:', error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  public async updateMatchScore(
+    req: Request<{ id: string }, unknown, { homeScore: number; awayScore: number }>,
+    res: Response
+  ): Promise<void> {
+    try {
+      const match = await this.matchService.updateMatch(req.params.id, {
+        homeScore: req.body.homeScore,
+        awayScore: req.body.awayScore,
+        status: MatchStatus.Finished
+      });
+
+      if (match) {
+        res.json(match);
+      } else {
+        res.status(404).json({ error: 'Match not found' });
+      }
+    } catch (error: any) {
+      console.error('Error recording match result:', error);
       res.status(400).json({ error: error.message });
     }
   }

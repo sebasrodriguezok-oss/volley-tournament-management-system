@@ -206,6 +206,41 @@ export class MatchRoutes {
 
     /**
      * @swagger
+     * /matches/{id}/score:
+     *   patch:
+     *     summary: Record a valid match result
+     *     tags: [Matches]
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required: [homeScore, awayScore]
+     *             properties:
+     *               homeScore:
+     *                 type: integer
+     *               awayScore:
+     *                 type: integer
+     *     responses:
+     *       200:
+     *         description: Result recorded; pending tournament transitions to in_progress
+     *       400:
+     *         description: Invalid result
+     */
+    this.router.patch(
+      '/matches/:id/score',
+      this.matchController.updateMatchScore.bind(this.matchController)
+    );
+
+    /**
+     * @swagger
      * /matches/{id}:
      *   delete:
      *     summary: Delete a match

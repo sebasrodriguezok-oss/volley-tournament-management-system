@@ -1,4 +1,5 @@
 import { MongoClient, ObjectId } from 'mongodb';
+import { config } from '../../config/config';
 import { Team } from './team.entity';
 import { TeamRepository } from './team.repository.interface';
 
@@ -10,7 +11,7 @@ export class TeamRepositoryMongodb implements TeamRepository {
   }
 
   private db() {
-    return this.mongoClient.db('voley_torneos');
+    return this.mongoClient.db(config.database.name);
   }
 
   async getTeams(): Promise<Team[]> {

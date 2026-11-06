@@ -2,13 +2,15 @@ import { Enrollment } from './enrollment.entity';
 import { EnrollmentRepository } from './enrollment.repository.interface';
 import { TeamRepository } from '../teams/team.repository.interface';
 import { TournamentRepository } from '../tournaments/tournament.repository.interface';
+import { MatchRepository } from '../matches/match.repository.interface';
 
 export class EnrollmentService {
 
   constructor(
     private readonly enrollmentRepository: EnrollmentRepository,
     private readonly teamRepository: TeamRepository,
-    private readonly tournamentRepository: TournamentRepository
+    private readonly tournamentRepository: TournamentRepository,
+    private readonly matchRepository: MatchRepository
   ) {}
 
   async getEnrollments(): Promise<Enrollment[]> {
@@ -86,6 +88,7 @@ export class EnrollmentService {
     if (tournament.status !== 'pending') {
       throw new Error('Tournament is not open for enrollment');
     }
+    await this.ensureFixtureNotGenerated(data.tournamentId);
 
     // Validación 4 — capacidad del torneo
     const currentEnrollments = await this.enrollmentRepository.getEnrollmentsByTournamentId(data.tournamentId);
@@ -98,15 +101,10 @@ export class EnrollmentService {
       throw new Error(`Team category (${team.category}) does not match tournament category (${tournament.category})`);
     }
 
-    // Validación 6 — el equipo no está en otro torneo activo
+    // Un equipo puede inscribirse en varios torneos, pero no repetirse en el mismo.
     const teamEnrollments = await this.enrollmentRepository.getEnrollmentsByTeamId(data.teamId);
-    for (const enrollment of teamEnrollments) {
-      if (enrollment.status === 'active') {
-        const enrolledTournament = await this.tournamentRepository.getTournamentById(enrollment.tournamentId);
-        if (enrolledTournament && enrolledTournament.status !== 'finished') {
-          throw new Error('Team is already enrolled in an active tournament');
-        }
-      }
+    if (teamEnrollments.some(enrollment => enrollment.tournamentId === data.tournamentId)) {
+      throw new Error('Team is already enrolled in this tournament');
     }
 
     return await this.enrollmentRepository.createEnrollment({
@@ -131,6 +129,7 @@ export class EnrollmentService {
     if (enrollment.status !== 'active') {
       throw new Error('Enrollment is not active');
     }
+    await this.ensureEnrollmentCanChange(enrollment.tournamentId);
 
     return await this.enrollmentRepository.updateEnrollmentStatus(id, 'withdrawn');
   }
@@ -140,6 +139,24 @@ export class EnrollmentService {
       throw new Error('Enrollment ID is required');
     }
 
+    const enrollment = await this.enrollmentRepository.getEnrollmentById(id);
+    if (!enrollment) return false;
+    await this.ensureEnrollmentCanChange(enrollment.tournamentId);
     return await this.enrollmentRepository.deleteEnrollment(id);
+  }
+
+  private async ensureEnrollmentCanChange(tournamentId: string): Promise<void> {
+    const tournament = await this.tournamentRepository.getTournamentById(tournamentId);
+    if (!tournament || tournament.status !== 'pending') {
+      throw new Error('Enrollments can only be changed for pending tournaments');
+    }
+    await this.ensureFixtureNotGenerated(tournamentId);
+  }
+
+  private async ensureFixtureNotGenerated(tournamentId: string): Promise<void> {
+    const matches = await this.matchRepository.getMatchesByTournamentId(tournamentId);
+    if (matches.length > 0) {
+      throw new Error('Enrollments cannot be changed after the fixture is generated');
+    }
   }
 }

@@ -1,4 +1,5 @@
 import { MongoClient, ObjectId } from 'mongodb';
+import { config } from '../../config/config';
 import { Enrollment } from './enrollment.entity';
 import { EnrollmentRepository } from './enrollment.repository.interface';
 
@@ -10,7 +11,7 @@ export class EnrollmentRepositoryMongodb implements EnrollmentRepository {
   }
 
   private db() {
-    return this.mongoClient.db('voley_torneos');
+    return this.mongoClient.db(config.database.name);
   }
 
   private toEnrollment(enrollment: any): Enrollment {
@@ -91,5 +92,10 @@ export class EnrollmentRepositoryMongodb implements EnrollmentRepository {
     });
 
     return result.deletedCount === 1;
+  }
+
+  async deleteEnrollmentsByTournamentId(tournamentId: string): Promise<number> {
+    const result = await this.db().collection('enrollments').deleteMany({ tournamentId });
+    return result.deletedCount;
   }
 }

@@ -8,4 +8,5 @@ export interface EnrollmentRepository {
   createEnrollment(enrollment: Omit<Enrollment, 'id'>): Promise<Enrollment>;
   updateEnrollmentStatus(id: string, status: Enrollment['status']): Promise<Enrollment | null>;
   deleteEnrollment(id: string): Promise<boolean>;
+  deleteEnrollmentsByTournamentId(tournamentId: string): Promise<number>;
 }

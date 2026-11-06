@@ -67,21 +67,35 @@ export class App {
     console.log('Connected to MongoDB');
 
     const tournamentRepository = new TournamentRepositoryMongodb(this.mongoClient);
-    const tournamentService = new TournamentService(tournamentRepository);
+    const teamRepository = new TeamRepositoryMongodb(this.mongoClient);
+    const enrollmentRepository = new EnrollmentRepositoryMongodb(this.mongoClient);
+    const matchRepository = new MatchRepositoryMongodb(this.mongoClient);
+    const tournamentService = new TournamentService(
+      tournamentRepository,
+      enrollmentRepository,
+      matchRepository
+    );
     const tournamentController = new TournamentController(tournamentService);
     const tournamentRoutes = new TournamentRoutes(tournamentController);
 
-    const teamRepository = new TeamRepositoryMongodb(this.mongoClient);
-    const teamService = new TeamService(teamRepository);
+    const teamService = new TeamService(
+      teamRepository,
+      enrollmentRepository,
+      tournamentRepository,
+      matchRepository
+    );
     const teamController = new TeamController(teamService);
     const teamRoutes = new TeamRoutes(teamController);
 
-    const enrollmentRepository = new EnrollmentRepositoryMongodb(this.mongoClient);
-    const enrollmentService = new EnrollmentService(enrollmentRepository, teamRepository, tournamentRepository);
+    const enrollmentService = new EnrollmentService(
+      enrollmentRepository,
+      teamRepository,
+      tournamentRepository,
+      matchRepository
+    );
     const enrollmentController = new EnrollmentController(enrollmentService);
     const enrollmentRoutes = new EnrollmentRoutes(enrollmentController);
 
-    const matchRepository = new MatchRepositoryMongodb(this.mongoClient);
     const standingRepository = new StandingRepositoryMongodb(this.mongoClient);
     const standingService = new StandingService(
       standingRepository,
@@ -91,7 +105,12 @@ export class App {
     const standingController = new StandingController(standingService);
     const standingRoutes = new StandingRoutes(standingController);
 
-    const matchService = new MatchService(matchRepository, standingService);
+    const matchService = new MatchService(
+      matchRepository,
+      standingService,
+      tournamentRepository,
+      tournamentService
+    );
     const matchController = new MatchController(matchService);
     const matchRoutes = new MatchRoutes(matchController);
 
@@ -100,6 +119,7 @@ export class App {
       tournamentRepository,
       enrollmentRepository,
       matchRepository,
+      teamRepository,
       roundRobinGenerator
     );
     const fixtureController = new FixtureController(fixtureService);

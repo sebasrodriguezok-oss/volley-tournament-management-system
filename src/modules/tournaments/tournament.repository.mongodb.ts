@@ -1,4 +1,5 @@
 import { MongoClient, ObjectId } from 'mongodb';
+import { config } from '../../config/config';
 import { Tournament } from './tournament.entity';
 import { TournamentRepository } from './tournament.repository.interface';
 
@@ -7,7 +8,7 @@ export class TournamentRepositoryMongodb implements TournamentRepository {
   private readonly mongoClient: MongoClient;
 
   private db() {
-    return this.mongoClient.db('voley_torneos');
+    return this.mongoClient.db(config.database.name);
   }
 
   constructor(mongoClient: MongoClient) {
@@ -76,9 +77,35 @@ export class TournamentRepositoryMongodb implements TournamentRepository {
     };
   }
 
+  async transitionTournamentStatus(
+    id: string,
+    currentStatus: Tournament['status'],
+    nextStatus: Tournament['status']
+  ): Promise<Tournament | null> {
+    const result = await this.db().collection('tournaments').findOneAndUpdate(
+      { _id: new ObjectId(id), status: currentStatus },
+      { $set: { status: nextStatus } },
+      { returnDocument: 'after' }
+    );
+
+    if (!result) return null;
+
+    return {
+      id: result._id.toString(),
+      name: result.name,
+      type: result.type,
+      category: result.category,
+      startDate: result.startDate,
+      endDate: result.endDate,
+      teamCount: result.teamCount,
+      status: result.status
+    };
+  }
+
   async deleteTournament(id: string): Promise<boolean> {
     const result = await this.db().collection('tournaments').deleteOne({
-      _id: new ObjectId(id)
+      _id: new ObjectId(id),
+      status: 'pending'
     });
     return result.deletedCount === 1;
   }

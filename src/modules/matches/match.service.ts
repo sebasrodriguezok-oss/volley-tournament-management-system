@@ -1,12 +1,16 @@
 import { Match, MatchStatus } from './match.entity';
 import { MatchRepository } from './match.repository.interface';
 import { StandingService } from '../standings/standing.service';
+import { TournamentRepository } from '../tournaments/tournament.repository.interface';
+import { TournamentService } from '../tournaments/tournament.service';
 
 export class MatchService {
 
   constructor(
     private readonly matchRepository: MatchRepository,
-    private readonly standingService: StandingService
+    private readonly standingService: StandingService,
+    private readonly tournamentRepository: TournamentRepository,
+    private readonly tournamentService: TournamentService
   ) {}
 
   async getMatches(): Promise<Match[]> {
@@ -34,6 +38,13 @@ export class MatchService {
     if (!data.tournamentId || data.tournamentId.trim().length === 0) {
       throw new Error('Tournament ID is required');
     }
+    const tournament = await this.tournamentRepository.getTournamentById(data.tournamentId);
+    if (!tournament) {
+      throw new Error('Tournament not found');
+    }
+    if (tournament.status === 'finished') {
+      throw new Error('Matches cannot be added to a finalized tournament');
+    }
 
     if (!data.homeTeamId || data.homeTeamId.trim().length === 0) {
       throw new Error('Home team ID is required');
@@ -55,7 +66,11 @@ export class MatchService {
 
     const createdMatch = await this.matchRepository.createMatch(data);
     if (createdMatch.status === MatchStatus.Finished) {
+      await this.startTournamentForResult(createdMatch.tournamentId);
+    }
+    if (createdMatch.status === MatchStatus.Finished) {
       await this.standingService.recalculateStandings(createdMatch.tournamentId);
+      await this.finalizeTournamentIfAllMatchesAreFinished(createdMatch.tournamentId);
     }
 
     return createdMatch;
@@ -74,6 +89,13 @@ export class MatchService {
     if (!existingMatch) {
       return null;
     }
+    const tournament = await this.tournamentRepository.getTournamentById(existingMatch.tournamentId);
+    if (!tournament) {
+      throw new Error('Tournament not found');
+    }
+    if (tournament.status === 'finished') {
+      throw new Error('Matches in finalized tournaments cannot be modified');
+    }
 
     const updatedMatchData = { ...existingMatch, ...match };
     this.validateFinishedMatch(updatedMatchData);
@@ -81,6 +103,9 @@ export class MatchService {
     const updatedMatch = await this.matchRepository.updateMatch(id, match);
     if (!updatedMatch) {
       return null;
+    }
+    if (updatedMatch.status === MatchStatus.Finished) {
+      await this.startTournamentForResult(updatedMatch.tournamentId);
     }
 
     const tournamentsToRecalculate = new Set<string>();
@@ -93,6 +118,10 @@ export class MatchService {
 
     for (const tournamentId of tournamentsToRecalculate) {
       await this.standingService.recalculateStandings(tournamentId);
+    }
+
+    if (updatedMatch.status === MatchStatus.Finished) {
+      await this.finalizeTournamentIfAllMatchesAreFinished(updatedMatch.tournamentId);
     }
 
     return updatedMatch;
@@ -120,6 +149,44 @@ export class MatchService {
   private validateFinishedMatch(match: Omit<Match, 'id'> | Match): void {
     if (match.status === MatchStatus.Finished) {
       this.standingService.validateMatchResult(match.homeScore, match.awayScore);
+    }
+  }
+
+  private async startTournamentForResult(tournamentId: string): Promise<void> {
+    const tournament = await this.tournamentRepository.getTournamentById(tournamentId);
+    if (!tournament) throw new Error('Tournament not found');
+    if (tournament.status === 'pending') {
+      const started = await this.tournamentRepository.transitionTournamentStatus(
+        tournamentId,
+        'pending',
+        'in_progress'
+      );
+      if (!started) {
+        const latest = await this.tournamentRepository.getTournamentById(tournamentId);
+        if (latest?.status !== 'in_progress') {
+          throw new Error('Could not update tournament status after recording the result');
+        }
+      }
+    } else if (tournament.status !== 'in_progress') {
+      throw new Error('A result cannot be recorded for a finalized tournament');
+    }
+  }
+
+  private async finalizeTournamentIfAllMatchesAreFinished(tournamentId: string): Promise<void> {
+    const matches = await this.matchRepository.getMatchesByTournamentId(tournamentId);
+    if (
+      matches.length === 0 ||
+      matches.some(match => match.status !== MatchStatus.Finished)
+    ) {
+      return;
+    }
+
+    try {
+      await this.tournamentService.finishTournament(tournamentId);
+    } catch (error) {
+      const tournament = await this.tournamentRepository.getTournamentById(tournamentId);
+      if (tournament?.status === 'finished') return;
+      throw error;
     }
   }
 

@@ -76,14 +76,13 @@ export class TournamentRoutes {
      *               - startDate
      *               - endDate
      *               - teamCount
-     *               - status
      *             properties:
      *               name:
      *                 type: string
      *                 example: 'Torneo Apertura 2025'
      *               type:
      *                 type: string
-     *                 enum: [round_robin, group_stage]
+     *                 enum: [round_robin]
      *               category:
      *                 type: string
      *                 example: 'Femenino Mayor'
@@ -98,9 +97,9 @@ export class TournamentRoutes {
      *               teamCount:
      *                 type: number
      *                 example: 8
-     *               status:
-     *                 type: string
-     *                 enum: [pending, in_progress, finished]
+     *                 minimum: 2
+     *                 maximum: 16
+     *                 description: Integer number of teams
      *     responses:
      *       201:
      *         description: Tournament created successfully
@@ -140,7 +139,7 @@ export class TournamentRoutes {
      *                 type: string
      *               type:
      *                 type: string
-     *                 enum: [round_robin, group_stage]
+     *                 enum: [round_robin]
      *               category:
      *                 type: string
      *               startDate:
@@ -151,9 +150,8 @@ export class TournamentRoutes {
      *                 format: date
      *               teamCount:
      *                 type: number
-     *               status:
-     *                 type: string
-     *                 enum: [pending, in_progress, finished]
+     *                 minimum: 2
+     *                 maximum: 16
      *     responses:
      *       200:
      *         description: Tournament updated successfully
@@ -172,6 +170,29 @@ export class TournamentRoutes {
 
     /**
      * @swagger
+     * /tournaments/{id}/finish:
+     *   post:
+     *     summary: Finalize a tournament after every match has a valid result
+     *     tags: [Tournaments]
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *     responses:
+     *       200:
+     *         description: Tournament finalized
+     *       400:
+     *         description: Tournament still has unresolved matches or cannot be finalized
+     */
+    this.router.post(
+      '/tournaments/:id/finish',
+      this.tournamentController.finishTournament.bind(this.tournamentController)
+    );
+
+    /**
+     * @swagger
      * /tournaments/{id}:
      *   delete:
      *     summary: Delete a tournament
@@ -184,7 +205,9 @@ export class TournamentRoutes {
      *           type: string
      *     responses:
      *       204:
-     *         description: Tournament deleted successfully
+     *         description: Tournament and its enrollments and unplayed matches deleted
+     *       400:
+     *         description: Tournament cannot be deleted because of its status or match results
      *       404:
      *         description: Tournament not found
      *         content:
